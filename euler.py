@@ -31,7 +31,7 @@ def summary(n):
     """Return a summary of and link to the nth Project Euler problem."""
     try:
         n = int(n)
-    except TypeError:
+    except ValueError:
         return (None, None)
     page = (n//50)+1
     page_url = 'http://projecteuler.net/problems;page={}'.format(page)
