@@ -24,7 +24,7 @@ def rand_item(sub='all'):
     url = SUB_URL.format(sub)
     try:
         data = loads(urlopen(url).read().decode('utf-8'))
-    except ValueError:
+    except (ValueError, HTTPError):
         return None, None
     if data.get('error', None) == '404':
         return None, None
