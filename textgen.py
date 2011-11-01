@@ -1,51 +1,81 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from markov import *
+from markov import Markov, ChainTermination
 from random import choice
 
-class Text(Markov):
+class TextGenerator(Markov):
     """Pseudo-random text generator."""
-    
+
     def parse(self, text):
         """Parses text and splits it into matching pairs."""
         words = text.split(' ')
-        self.matches = {}
-        for i in range(len(words)-3):
+        matches = {}
+        try:
+            start = (words[0], words[1])
+        except IndexError:
+            return {}
+        self.starts.add(start)
+        try:
+            matches[start] = [(words[1], words[2])]
+        except IndexError:
+            matches[start] = []
+        for i in range(1, len(words)-1):
             two = (words[i], words[i+1])
-            if two not in self.matches:
-                self.matches[two] = []
-            self.matches[two].append(words[i+2])
+            if two not in matches:
+                matches[two] = []
+            try:
+                matches[two].append(words[i+2])
+            except IndexError:
+                matches[two].append(None)
+        return matches
                 
-    def digest(self):
+    def digest(self, matches):
         """Takes table of matching words and adds to the pool of states."""
-        for w in self.matches:
-            self.add_state(w)
-            for m in self.matches[w]:
-                self.add_state((w[1], m))
-                self.set_prob(w, (w[1], m))
+        for two in matches:
+            self.add_state(two)
+            for match in matches[two]:
+                self.add_state((two[1], match))
+                self.set_prob(two, (two[1], match))
     
     def learn(self, text):
-        self.parse(text)
-        self.digest()
+        """This is the one which is called externally."""
+        matches = self.parse(text)
+#        print(matches)
+        self.digest(matches)
     
-    def get_text(self, count=100):
+    def get_text(self, count=100, terminate=True):
+        if not self.states.keys():
+            print('no states')
+            return None
         text = []
-        self.cur_state = choice(list(self.states.keys()))
+        try:
+            self.step(choose=True, start=True)
+        except ChainTermination:
+            return ' '.join(text)
         for i in range(count):
+            text.append(self.cur_state)
             try:
-                text.append(self.cur_state[0])
-                self.step(True)
+                self.step(choose=True)
             except ChainTermination:
-                self.cur_state = choice(list(self.states.keys()))
+#                print('step raised Term')
+                return ' '.join(text)
+#                self.step(choose=True, start=True)
+#        print('got to end of count')
         return ' '.join(text)
     
-    def __init__(self):
-        Markov.__init__(self)
-
 def test():
-    t = open('/home/alan/bin/aiw').read()
-    x = Text()
-    x.learn(t)
-    return x.get_text(1000)
+    from os.path import expanduser
+    with open(expanduser('~/bin/aiw')) as f:
+        t = f.read()
+    lines = t.splitlines()
+    x = TextGenerator()
+    for line in lines:
+#        print('LINE')
+#        print(line)
+        x.learn(line)
+#    print(x.states)
+    return x.get_text(200)
     
+if __name__ == '__main__':
+    print(test())

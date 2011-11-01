@@ -1,38 +1,25 @@
 #!/usr/bin/env python3
 
-from html.parser import HTMLParser
 from urllib.request import urlopen
+from urllib.error import URLError
+from re import search, DOTALL
 
-class TitleParser(HTMLParser):
-    
-    def __init__(self, html):
-        self.title = ''
-        self.in_head = False
-        self.read_data = False
-        HTMLParser.__init__(self)
-        self.feed(html)
-    
-    def handle_starttag(self, tag, attrs):
-        if tag == 'head':
-            self.in_head = True
-        elif tag == 'title' and self.in_head and not self.title:
-            self.read_data = True
-    
-    def handle_endtag(self, tag):
-        if tag == 'head':
-            self.in_head = False
-        elif tag == 'title':
-            self.read_data = False
-    
-    def handle_data(self, data):
-        if self.read_data:
-            self.title += data
+pattern = r'<title>(.+)</title>'
 
 def get_title(url):
+    """Takes a URL as an argument. Returns False if URL is invalid or parser chokes on HTML, None if no title tags were found and the title of the specified page otherwise."""
     if not url.startswith('http://'):
         url = 'http://'+url
-    html = urlopen(url).read().decode()
-    return TitleParser(html).title
+    try:
+        html = urlopen(url).read().decode()
+    except URLError:
+        return False
+    title = search(pattern, html, flags=DOTALL)
+    if title is None:
+        return None
+    else:
+        return title.group(1)
+
 
 def main():
     from sys import argv
