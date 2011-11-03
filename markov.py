@@ -4,7 +4,7 @@
 """Playing around with Markov chains"""
 
 from random import random, choice
-from json import dump, load
+from pickle import dump, load
 
 class StateError(Exception):
     pass
@@ -50,15 +50,15 @@ class Markov:
     
     def save(self, file=None):
         file = file or self.save_file
-        with open(file, 'w') as f:
+        with open(file, 'wb') as f:
             dump(self.states, f)
     
     def load(self, file=None):
         file = file or self.save_file
         try:
-            with open(file, 'r') as f:
+            with open(file, 'rb') as f:
                 self.states = load(f)
-        except (IOError, ValueError):
+        except (IOError, ValueError, EOFError):
             # Save file does not exist or is corrupted
             return
     
