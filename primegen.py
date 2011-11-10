@@ -13,3 +13,7 @@ def primes(n):
         if not divisible:
             primes.append(i)
             yield i
+
+if __name__ == '__main__':
+    from sys import argv
+    print(list(primes(int(argv[1]))))

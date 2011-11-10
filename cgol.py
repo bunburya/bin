@@ -19,14 +19,6 @@ class Grid:
                 if random() < percent:
                     self.grid[y][x] = 1
     
-    def populateFromFile(self, f, length):
-        with open(f, 'r') as f:
-            population = f.readline()
-        if len(population) != length**2:
-            print('File is of invalid length; must contain %d characters.' % length**2)
-        self.grid = [population[i:i+3] for i in range(0, len(population), length)]
-            
-    
     def display(self, dead=' ', alive='#'):
         key = {1: alive, 0: dead}
         return [''.join([key[j] for j in i[1:-1]]) for i in self.grid[1:-1]]
