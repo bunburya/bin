@@ -1,11 +1,11 @@
-from sys import builtin_module_names
+from sys import builtin_module_names, modules
 
 def doc_from_str(objstr):
     ns = objstr.split('.')
     try:
         obj = __builtins__[ns[0]]
     except KeyError:
-        if ns[0] in builtin_module_names:
+        if (ns[0] in builtin_module_names) or (ns[0] in modules):
             obj = __import__(ns[0])
         else:
             return None
