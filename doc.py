@@ -15,3 +15,5 @@ def doc_from_str(objstr):
         except AttributeError:
             return None
     return getattr(obj, '__doc__')
+    
+
