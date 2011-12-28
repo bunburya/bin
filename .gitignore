@@ -4,6 +4,8 @@ ircbot
 pyconquest
 pyris
 java
+mechanize
+mutagen
 __pycache__
 *.pyc
 *.o
