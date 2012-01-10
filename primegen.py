@@ -9,7 +9,9 @@ def primes(n):
     for i in range(3, n+1, 2):
         divisible = False
         for j in primes:
-            if i % j == 0:
+            if j > sqrt(i):
+                break
+            elif i % j == 0:
                 divisible = True
                 break
         if not divisible:
