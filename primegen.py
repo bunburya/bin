@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from math import sqrt
+
 def primes(n):
     '''Return all the primes up to n.'''
     primes = [2]
-    for i in range(3, n+1):
+    for i in range(3, n+1, 2):
         divisible = False
         for j in primes:
             if i % j == 0:
