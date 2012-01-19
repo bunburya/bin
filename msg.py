@@ -4,8 +4,32 @@
 from json import load, dump
 from os.path import expanduser, join
 from time import asctime
+from html.parser import HTMLParser
 
 class CorruptedFileError(Exception): pass
+
+user_cfg_path = '/home/bunburya/webspace/cgi-bin/pisg/pum/users.cfg'
+
+class AliasParser(HTMLParser):
+
+    def __init__(self, *nicks):
+        self._nicks = set(nicks)
+        self.nick_to_alias = {}
+        self.alias_to_nick = {}
+        HTMLParser.__init__(self)
+
+    def handle_starttag(self, tag, attrs):
+        if not tag == 'user':
+            return
+        attrs = dict(attrs)
+        nick = attrs.get('nick')
+        alias = attrs.get('alias')
+        if not ((nick in self._nicks) and alias):
+            return
+        aliases = alias.split()
+        self.nick_to_alias[nick] = aliases
+        for a in aliases:
+            self.alias_to_nick[a] = nick
 
 class MessageHandler:
     

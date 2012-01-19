@@ -14,6 +14,7 @@ class ResultParser(HTMLParser):
         self.text = []
         self.links = []
         self.results = []
+        self.total = 0
         HTMLParser.__init__(self, *args, **kwargs)
     
     def handle_starttag(self, tag, attrs):
@@ -50,11 +51,16 @@ class Result:
         self.parse_links(links)
     
     def parse_text(self, text):
-        if len(text) == 4:
+        if len(text) > 3:
+            print('RETIRED')
+            print(text)
             self.retired = True
             text.pop(0)
+            print(text)
         else:
             self.retired = False
+        print(text)
+        print(text[0])
         self.beer = text[0]
         self.brewer = text[1]
         self.location = text[2].lstrip('| ')
@@ -69,6 +75,9 @@ def search(query, to_return=None):
     search_url = '?'.join((base_search_url, data))
     html = urlopen(search_url).read().decode()
     html = html.replace('<php if($userId){ ?>', '').replace('<php } ?>', '')
+    html = html.replace('&', 'and')
+    #print(html)
+    #return
     parser = ResultParser()
     parser.feed(html)
     if to_return is None:
