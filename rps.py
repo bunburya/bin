@@ -125,10 +125,8 @@ class RockPaperScissors:
             challor_games.pop(challee)
         else:
             # challee has not previously challenged challor
-            print(current_games)
             challor_games[challee] = move
             challee_games[challor] = None
-            print(current_games)
             result = None
         current_games[challor] = challor_games
         current_games[challee] = challee_games
@@ -143,7 +141,7 @@ class RockPaperScissors:
     def get_optouts(self):
         try:
             with open(self.optouts_file, 'r') as f:
-                return set(f.readlines())
+                return set(line.strip() for line in f)
         except IOError:
             return set()
 
