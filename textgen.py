@@ -75,7 +75,7 @@ def test():
 #        print(line)
         x.learn(line)
 #    print(x.states)
-    return x.get_text(200)
+    return x.get_text(400)
     
 if __name__ == '__main__':
     print(test())

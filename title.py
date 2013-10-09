@@ -7,7 +7,10 @@ from re import search, DOTALL
 pattern = r'<title>(.+)</title>'
 
 def get_title(url):
-    """Takes a URL as an argument. Returns False if URL is invalid or parser chokes on HTML, None if no title tags were found and the title of the specified page otherwise."""
+    """Takes a URL as an argument. Returns False if URL is invalid or parser
+    chokes on HTML, None if no title tags were found and the title of the
+    specified page otherwise.
+    """
     if not url.startswith('http://'):
         url = 'http://'+url
     try:

@@ -61,7 +61,19 @@ def main(infile, outfile, serv):
 
 if __name__ == '__main__':
     # files and server name are hardcoded out of laziness
-    infile = '/home/bunburya/.bunbot/rps/irc.freenode.net/players'
-    outfile = '/home/bunburya/webspace/rps/freenode.html'
-    serv = 'irc.freenode.net'
-    main(infile, outfile, serv)
+    in_out_serv = (
+            (
+                '/home/bunburya/.bunbot/rps/irc.freenode.net/players',
+                '/home/bunburya/webspace/rps/freenode.html',
+                'irc.freenode.net'
+                ),
+            (
+                '/home/bunburya/.bunbot/rps/irc.netsoc.tcd.ie/players',
+                '/home/bunburya/webspace/rps/intersocs.html',
+                'intersocs'
+                )
+            )
+
+
+    for infile, outfile, serv in in_out_serv:
+        main(infile, outfile, serv)

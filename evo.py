@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
-
 from random import choice, random
     
 bins = ['00', '01', '10', '11']
