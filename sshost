@@ -1,0 +1,33 @@
+#!/bin/sh
+
+hosturl="http://img.bunburya.eu"
+hostssh="img@bunburya.eu"
+hostdir="images"
+id_file="/home/alan/.ssh/id_rsa_img.bunburya.eu"
+
+fname="$(date +%s).jpg"
+tmpfile="/tmp/$fname"
+if [[ "$1" = "fs" ]]; then
+    scrot "$tmpfile"
+else
+    scrot -s "$tmpfile"
+fi
+notify-send "Sending screenshot to host server..."
+scp -i $id_file -q "$tmpfile" "$hostssh:$hostdir"
+scp_exit=$?
+rm "$tmpfile"
+case $scp_exit in
+    0)
+        text="$(zenity --entry\
+            --text="Here is your image URL. Click OK to copy it into your X selection, or Cancel otherwise."\
+            --entry-text="$hosturl/$fname")"
+        if [[ -n "$text" ]]; then
+            echo -n "$text" | xclip
+        fi
+        exit 0
+        ;;
+    *)
+        zenity --error --text="An error occurred when sending the image to the host server."
+        exit 1
+esac 
+

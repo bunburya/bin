@@ -1,5 +1,0 @@
-#!/bin/bash
-
-if [ -n "$1" ]; then
-    exec "$@" "$(zenity --file-selection)"
-fi
