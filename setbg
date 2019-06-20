@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [[ "$1" ]]; then
+    path="$1"
+else
+    pics=(/home/alan/pics/backgrounds/*)
+    path="${pics[RANDOM % ${#pics[@]}]}"
+fi
+
+feh --bg-scale "$path"

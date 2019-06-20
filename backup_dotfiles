@@ -1,0 +1,14 @@
+#!/usr/bin/sh
+
+FILE_DIR="/home/alan/bin/dotfiles"
+FILE_LIST="$FILE_DIR/dotfiles.txt"
+
+while read -r line; do
+    cp "$line" "$FILE_DIR"
+done < "$FILE_LIST"
+
+cd "$FILE_DIR"
+
+git commit -am "Updating $(date)"
+git push origin master
+echo "Dotfile update complete."

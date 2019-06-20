@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# We basically need this to call pactl subscribe and filter the output
+# so that, for each volume change event (not checking volume), we
+# output exactly one line.
+
+pactl subscribe | sed -n s/"\(Event 'change' on sink #0$\)\+"/lol/p

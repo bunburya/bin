@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# Some basic helper functions for reading key display information from
+# the output of xrandr and outputting it in an easily parsed manner.
+
+get_connected() {
+    xrandr | awk '/[[:alnum:]] connected/ {print $1}'
+}
+
+get_active() {
+    xrandr | awk '/[[:alnum:]] connected (primary )?[[:digit:]]+x[[:digit:]]+i?\+[[:digit:]]+\+[[:digit:]]+/ {print $1}'
+}
+
+is_connected() {
+    while [ -n "$1" ]; do
+        output=$(xrandr | grep "$1 connected")
+        if [ -n "$output" ]; then
+            echo "true"
+        else
+            echo "false"
+        fi
+        shift
+    done
+}
+
+is_active() {
+    while [ -n "$1" ]; do
+        output=$(xrandr | grep "$1 connected \(primary \)\?[[:digit:]]\+x[[:digit:]]\+i\?+[[:digit:]]\++[[:digit:]]\+")
+        if [ -n "$output" ]; then
+            echo "true"
+        else
+            echo "false"
+        fi
+        shift
+    done
+}
+
+    

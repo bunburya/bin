@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ssh -ND 8080 bunburya@spoon.netsoc.tcd.ie
