@@ -10,6 +10,8 @@ notify2.init('Screen manager')
 
 STATUS_RE = re.compile(r'(\w+) (dis)?connected (primary)? ?(\d+x\d+i?\+\d+\+\d+)?')
 
+DEFAULT_PRIMARY = 'eDP1'
+
 def notify(text):
     n = notify2.Notification('Screen manager', text)
     return n.show()
@@ -20,6 +22,7 @@ def get_xrandr():
 def set_xrandr(args):
     if args[0] != 'xrandr':
         args.insert(0, 'xrandr')
+    print('calling {}'.format(args))
     subprocess.call(args)
 
 def get_displays(xrandr_output=None):
@@ -37,37 +40,71 @@ def get_displays(xrandr_output=None):
                     }
     return displays
 
-def get_connected():
+def get_connected(*display_names):
     all_displays = get_displays()
-    return OrderedDict([(d, all_displays[d]) for d in all_displays if all_displays[d]['connected']])
+    display_names = display_names or all_displays.keys()
+    return OrderedDict([(d, all_displays[d]) for d in display_names if all_displays[d]['connected']])
 
 def get_active():
     all_displays = get_displays()
     return OrderedDict([(d, all_displays[d]) for d in all_displays if all_displays[d]['active']])
 
-def set_active(*displays):
-    all_displays = get_displays()
-    if displays:
-        if all_displays[displays[0]]['connected']:
-            args = ['xrandr', '--output', displays[0], '--auto']
-        else:
-            notify('Display {} not connected.'.format(displays[0]))
+def decide_primary(displays, connected):
+    if len(displays) == 1:
+        # if only one display specified and it is connected, it is primary.
+        d = displays[0]
+        if d in connected:
+            return d
+    elif len(connected) == 1:
+        # if only one display is connected and it is specified, it is primary.
+        d = connected.copy().pop()
+        if d in displays:
+            return d
+    elif DEFAULT_PRIMARY in displays and DEFAULT_PRIMARY in connected:
+        # if a defined default is both connected and specified, it is primary.
+        return DEFAULT_PRIMARY
     else:
-        args = []
-    for i, d in enumerate(displays[1:]):
+        # specified display that is connected is primary
+        for d in displays:
+            if d in connected:
+                return d
+        else:
+            # no primary
+            return None
+
+def set_active(*display_names):
+    all_connected = get_connected()
+    primary = decide_primary(display_names, all_connected)
+    args = ['xrandr']
+    if display_names:
+        first_display = all_connected.get(display_names[0])
+        if first_display:
+            args = ['xrandr', '--output', display_names[0], '--auto']
+            if display_names[0] == primary:
+                args.append('--primary')
+        else:
+            notify('Display {} not connected.'.format(display_names[0]))
+    for i, d in enumerate(display_names[1:]):
         try:
-            if all_displays[d]['connected']:
+            current_display = all_connected.get(d)
+            if current_display:
                 args.append('--output')
                 args.append(d)
                 args.append('--auto')
                 args.append('--right-of')
-                args.append(displays[i])
+                args.append(display_names[i])
+                if d == primary:
+                    args.append('--primary')
             else:
                 notify('Display {} not connected.'.format(d))
         except KeyError:
             notify('Display {} not found.'.format(d))
-    for d in all_displays:
-        if d not in displays:
+    
+    # Turn everything else off
+    for d in all_connected.keys():
+        print(d)
+        print(display_names)
+        if d not in display_names:
             args.append('--output')
             args.append(d)
             args.append('--off')

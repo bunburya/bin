@@ -15,6 +15,8 @@ import pandas as pd
 
 XLSX_FILE = argv[1]
 
+PAYDAY = 8
+
 def get_data():
     return pd.read_excel(XLSX_FILE, header=[0, 1], index_col=0, parse_dates=True) 
 
@@ -23,28 +25,44 @@ def generate_plots(df):
     fig = plt.figure(figsize=(20, 10))
     
     totals_ax = plt.subplot2grid(shape=(2,6), loc=(0,0), colspan=2)
-    change_ax = plt.subplot2grid((2,6), (0,2), colspan=2)
-    pie_ax = plt.subplot2grid((2,6), (0,4), colspan=2)
-    boi_ax = plt.subplot2grid((2,6), (1,1), colspan=2)
-    others_ax = plt.subplot2grid((2,6), (1,3), colspan=2)
+    boi_ax = plt.subplot2grid((2,6), (0,2), colspan=2)
+    others_ax = plt.subplot2grid((2,6), (0,4), colspan=2)
+    weekly_ax = plt.subplot2grid((2,6), (1,0), colspan=2)
+    monthly_ax = plt.subplot2grid((2,6), (1,2), colspan=2)
+    pie_ax = plt.subplot2grid((2,6), (1,4), colspan=2)
     
-    time_plots = [totals_ax, change_ax, boi_ax, others_ax]
+    time_plots = [totals_ax, boi_ax, others_ax, weekly_ax, monthly_ax]
     
-    #totals_ax: Total amounts, separated by cash and non-cash
+    # totals_ax: Total amounts, separated by cash and non-cash
     totals_ax.set_title('Total')
     tcols = [df['Totals']['Total cash'], df['Totals']['Total non-cash']]
     totals_ax.stackplot(df.index, tcols, labels=['Total cash', 'Total non-cash'])
     totals_ax.legend()
-    change_ax.xaxis_date()
+    totals_ax.xaxis_date()
 
-    # change_ax: Weekly change of total assets
-    change_data = df['Totals']['Total'] - df['Totals']['Total'].shift(1)
-    change_data.dropna(inplace=True)
-    ewma10 = change_data.ewm(span=10).mean()
-    change_ax.set_title('Net weekly change (10-week EWMA)')
-    change_ax.bar(change_data.index, change_data, width=5)
-    change_ax.plot(ewma10, ls='--', color='black')
-    change_ax.xaxis_date()
+    # weekly_ax: Weekly change of total assets
+    weekly_change = df['Totals']['Total'] - df['Totals']['Total'].shift(1)
+    weekly_change.dropna(inplace=True)
+    ewma26 = weekly_change.ewm(span=26).mean()
+    weekly_ax.set_title('Net weekly change (26-week EWMA)')
+    weekly_ax.bar(weekly_change.index, weekly_change, width=5)
+    weekly_ax.plot(ewma26, ls='--', color='black')
+    weekly_ax.xaxis_date()
+    
+    # monthly_ax: Monthly change of total assets
+    # TODO:  The ticks on this plot are wrong, off by one month.  Fix.
+    monthly_data = df.resample('M').apply(lambda m: m[-1])
+    monthly_data.dropna(inplace=True)
+    print(monthly_data)
+    monthly_change = monthly_data['Totals']['Total'] - monthly_data['Totals']['Total'].shift(1)
+    monthly_change.dropna(inplace=True)
+    print(monthly_change)
+    print(monthly_change.index)
+    ewma6 = monthly_change.ewm(span=6).mean()
+    monthly_ax.set_title('Net monthly change (6-month EWMA)')
+    monthly_ax.bar(monthly_change.index, monthly_change, width=1)
+    monthly_ax.plot(ewma6, ls='--', color='black')
+    monthly_ax.xaxis_date()    
 
     # pie_ax: Amounts held with each entity, as pie chart
     pie_labels = df.columns.levels[0][:6] # exclude Totals
