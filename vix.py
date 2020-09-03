@@ -1,13 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import time
+import asyncio
 from operator import gt, lt
 from json import load, dump, JSONDecodeError
 from datetime import datetime
+from os import mkdir
+from os.path import join, expanduser, dirname, exists
 
+import telepot
+from telepot.aio.loop import MessageLoop
+from telepot.aio.delegate import pave_event_space, per_application, per_chat_id, create_open
 import requests
 import bs4
 import pandas
+
+CONF_DIR = join(expanduser('~'), '.config', 'vix_telegram')
+if not exists(CONF_DIR):
+    mkdir(CONF_DIR)
+
+STATE_PATH = join(CONF_DIR, 'state.json')
 
 class Notification:
 
@@ -61,9 +74,9 @@ class Handler:
     """Handles data and loads and saves state, including about most recent data
     received and active notifications."""
 
-    def __init__(self, data_provider, state_path=None):
+    def __init__(self, state_path=None, data_provider=None):
 
-        self.data_provider = data_provider
+        self.data_provider = data_provider or VIXData()
         self.state_path = state_path
         self.n_id = 0
         if state_path:
@@ -136,15 +149,22 @@ class Handler:
                 results.append((n.n_id, r))
         return results
     
-    def update_data(self):
+    def update_historical_data(self,override=False):
         try:
             last_date = datetime.fromtimestamp(self.historical_data['timestamp']).date()
             today = datetime.today().date()
             to_update = today > last_date
         except TypeError:
             to_update = True
-        if to_update:
+        if to_update or override:
             self.get_historical_data()
+    
+    def update_last_value(self):
+        self.get_current_value()
+    
+    def update_date(self, override_historical=False):
+        self.update_historical_data(override_historical)
+        self.update_last_value()
     
 class VIXData:
 
@@ -209,27 +229,23 @@ def test():
     h.save_state()
     h.load_state()
     print(h.historical_data)
-
+    h.update_data()
+"""
 if __name__ == '__main__':
     test()
-
 """
-#!/usr/bin/env python3
 
-import time
-import telepot
+async def send_foo(bot, _id):
+    while 1:
+        await bot.sendMessage(_id, 'foo')
+        await asyncio.sleep(5)
+        
 
-from os import mkdir
-from os.path import join, expanduser, dirname
+class VIXBot:
 
-from plugin_handler import Plugin, PluginHandler
+    def __init__(self, confdir):
 
-
-class Bot:
-
-    def __init__(self):
-
-        self.confdir = join(expanduser('~'), '.telegram_bot')
+        self.confdir = confdir
 
         try:
             with open(join(self.confdir, 'bot_token')) as f:
@@ -239,25 +255,23 @@ class Bot:
         except FileNotFoundError:
             print('Token and / or valid ID file not found.')
             return
+            
+        state_path = join(confdir, 'state.json')
+        self.data_handler = Handler(state_path)
                     
-        self.run()        
+        self.run()
     
-    def handle_globally(self, content_type, msg):
+    async def handle_globally(self, content_type, msg):
         if content_type == 'text':
             print('Text is: {}'.format(msg['text']))
-        elif content_type in {'photo', 'audio'}:
-            caption = msg.get('caption')
-            if caption is None:
-                print('No caption.')
-            else:
-                print('Caption is {}'.format(caption))
+            await self.bot.sendMessage(self.valid_id, 'bar')
         else:
             self.handle_other(msg)
     
     def handle_other(self, msg):
         pass
     
-    def handle(self, msg):
+    async def handle(self, msg):
     
         content_type, msg_type, chat_id, msg_date, msg_id = telepot.glance(msg, long=True)
         print('Got message of type {} from ID {}'.format(content_type, chat_id))
@@ -268,18 +282,21 @@ class Bot:
                 'Unauthorised message {} from ID {}.'.format(chat_id, chat_id))
             return
         else:
-            self.handle_globally(content_type, msg)
-            self.plugin_handler.call_handlers(content_type, msg)
-
+            await self.handle_globally(content_type, msg)
+    
     def run(self):
-        self.bot = telepot.Bot(self.bot_token)
-        self.bot.message_loop(self.handle)
+        
+        self.bot = telepot.aio.Bot(self.bot_token)
+        loop = asyncio.get_event_loop()
+        loop.create_task(MessageLoop(self.bot, self.handle).run_forever())
+        loop.create_task(send_foo(self.bot, self.valid_id))
 
         print('Listening.')
 
-        while 1:
-            time.sleep(5)
+        loop.run_forever()
+
+
 
 if __name__ == '__main__':
-    b = Bot()
-"""
+    b = VIXBot(CONF_DIR)
+

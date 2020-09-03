@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as dates
 import pandas as pd
 
+#matplotlib.use('Qt5Agg')
+
 #%matplotlib qt5
 
 # TODO:  Add new plot showing net monthly change, once sufficient data
@@ -39,6 +41,15 @@ def generate_plots(df):
     totals_ax.stackplot(df.index, tcols, labels=['Total cash', 'Total non-cash'])
     totals_ax.legend()
     totals_ax.xaxis_date()
+    
+    # totals_ax: Total amounts (monthly), separated by cash and non-cash
+    #monthly_data = df.resample('M').apply(lambda m: m[-1])
+    #monthly_data.dropna(inplace=True)
+    #totals_ax.set_title('Total')
+    #tcols = [monthly_data['Totals']['Total cash'], monthly_data['Totals']['Total non-cash']]
+    #totals_ax.stackplot(monthly_data.index, tcols, labels=['Total cash', 'Total non-cash'])
+    #totals_ax.legend()
+    #totals_ax.xaxis_date()
 
     # weekly_ax: Weekly change of total assets
     weekly_change = df['Totals']['Total'] - df['Totals']['Total'].shift(1)
